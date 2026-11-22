@@ -281,3 +281,71 @@ Lunghezza minima per funzione critica: 300 parole + 2 esempi concreti.
 - Il `redattore-manuale` applica questi standard a ogni pagina nuova o aggiornata, in tutti i progetti.
 - Il `tester` e il `validatore` verificano il rispetto degli standard; una sezione non conforme è `RESPINTA`.
 - I progetti esistenti aprono un task di refactoring del manuale (`docs/progetto/task-refactoring-manuale.md`).
+
+## 2026-11-22 — Senza credito DeepSeek non si usa DeepSeek
+
+**Decisione di Andrea** (chat del 22/11/2026, progetto Volty): «se non c'è credito non può essere utilizzato DeepSeek».
+
+**Perché**: in Volty la revisione automatica delle PR (OpenCode con DeepSeek) falliva con `Insufficient Balance`
+(account a -0,01 USD) e bloccava PR con codice verde e già approvate da tester e validatore.
+
+**Effetto**
+- I controlli AI automatici della CI che usano DeepSeek (revisione PR, triage, diario) riconoscono
+  `Insufficient Balance`, finiscono con un avviso e non bloccano; ogni altro errore continua a farli fallire.
+  Primo progetto allineato: Volty (`opencode-revisione-pr.yml`, `opencode-triage.yml`, `opencode-diario.yml`,
+  PR newalphalab/volty-flutter#185). Gli altri progetti con gli stessi workflow si allineano allo stesso modo.
+- Gate obbligatori invariati: CI di codice, tester, validatore, revisore-sicurezza, guardiano.
+- Senza credito non si usa nemmeno il ripiego a pagamento (`deepseek/deepseek-flash#high`): è DeepSeek.
+- **Interpretazione prudente della squadra, correggibile da Andrea** (Andrea ha detto solo «non si usa»):
+  - gli agenti di sviluppo a pagamento (backend, frontend, bug, architettura, dati) proseguono sui modelli
+    gratuiti, perché «la squadra non si ferma mai»;
+  - `validatore` (a pagamento per decisione del 30/10/2026), `revisore-sicurezza` e `guardiano-produzione` non
+    passano a un modello più debole: senza credito il loro esito è `BLOCCATO`, mai `APPROVATO`/`GO`; il loro NO
+    prevale sempre e nel dubbio vale NO-GO. Alternativa scartata: farli girare sui gratuiti come gate pieni
+    (un controllo obbligatorio su un modello più debole è un indebolimento dei gate).
+- Ricaricare il credito resta una decisione di Andrea.
+
+**File aggiornati**: `CLAUDE.md` (Costi dei modelli), `REGOLE-IN-BREVE.md` (§15), `DECISIONI.md` (questa voce).
+
+**Seconda lettura indipendente**: `validatore`, primo esito RESPINTO (ordine dei punti in REGOLE-IN-BREVE,
+ripiego a pagamento, interpretazione da dichiarare, revisore e guardiano), correzioni applicate.
+
+## 2026-11-22 — La sincronizzazione delle regole non si ferma su un progetto
+
+**Decisione della squadra** (applica «la squadra non si ferma mai» e la decisione di Andrea del 22/11/2026
+sul credito DeepSeek, che non era arrivata in 5 progetti su 6).
+
+**Perché**: il 22/11/2026 il workflow *Sync squad rules to all projects* si è fermato su `avanza/staging`
+(«GH013: Changes must be made through a pull request — 5 of 5 required status checks are expected») e
+`commerciali`, `campionato-broccoli`, `fantami` e `fantafriend` non hanno ricevuto nulla. In più
+`projects.json` puntava ancora a `sbotz17` per repository passati a `newalphalab`.
+
+**Effetto**
+- Ogni progetto si sincronizza in un passo a sé (`scripts/sync_progetto.sh`): un errore non ferma gli
+  altri; alla fine il workflow riepiloga aggiornati, PR in attesa e falliti, e diventa rosso se c'è almeno
+  un fallito.
+- Ramo protetto che chiede una PR: niente push forzato né aggiramento delle protezioni. Il workflow
+  spinge un ramo `sync/regole-squadra-*` e apre una PR di sole regole verso il ramo del progetto; la PR passa
+  dai controlli obbligatori del progetto e la unisce il coordinatore quando sono verdi. Una PR identica già
+  aperta non si duplica; le PR di sync superate si chiudono. Alternative scartate: aggiungere il bot tra chi
+  può scavalcare il ruleset (indebolisce la protezione) e togliere il progetto dalla sincronizzazione.
+- `projects.json`: owner verificato con `gh repo view`. `volty-flutter`, `avanza`, `commerciali`,
+  `campionato-broccoli` → `newalphalab`; `fantami` e `fantafriend` restano `sbotz17` (non risultano in
+  `newalphalab`).
+
+**Come tornare indietro**: revert del merge in `squadraalphalab` (workflow e `projects.json` tornano come
+prima). Le PR di regole aperte nei progetti si chiudono senza unirle; i commit di regole già arrivati sono
+solo testo e si annullano con un revert nel progetto.
+
+**File aggiornati**: `.github/workflows/sync-squad-rules.yml`, `scripts/sync_progetto.sh` (nuovo),
+`projects.json`, `CLAUDE.md` e `AGENTS.md` (sezione Ambienti), `REGOLE-IN-BREVE.md` (§8), `DECISIONI.md`.
+
+**Seconda lettura indipendente**: `validatore`, esito APPROVATO (DRY_RUN rieseguito su avanza, fantami,
+campionato-broccoli; token assente dai log; nessun aggiramento di protezioni o del blocco). Applicata la sua
+osservazione: se `gh pr list` fallisce il progetto risulta fallito invece di aprire una PR duplicata.
+
+**Errore dichiarato (22/11/2026)**: il primo run dopo il merge (#13) si è fermato su Avanza dopo aver aperto
+correttamente la PR di regole (newalphalab/avanza#60). Il motivo: GitHub Actions avvia il passo con `bash -e` e
+l'uscita 10 («PR aperta») interrompeva il ciclo. La prova locale era stata fatta senza `-e`. Nessun danno: Volty
+è stato aggiornato, gli altri progetti non sono stati toccati. Correzione: `set +e` esplicito nel passo,
+provato con `bash --noprofile --norc -eo pipefail` come sul runner (esiti 0, 10 e fallito nello stesso giro).
