@@ -7,7 +7,7 @@ scritto per essere letto anche da chi non è tecnico. Le regole complete sono in
 **Regola importante**: ogni volta che cambia una regola, questo documento si aggiorna **nello stesso giro**.
 Non è un riassunto “una volta per tutte”.
 
-**Ultimo aggiornamento**: 05/11/2026
+**Ultimo aggiornamento**: 22/11/2026
 
 ---
 
@@ -199,6 +199,8 @@ prova. Tester e validatore sono indipendenti: nessuno approva il proprio lavoro.
 - Mai push diretto su `main` o sul ramo di produzione: si passa da pull request e controlli.
 - Unica eccezione: il workflow che sincronizza le regole aggiorna solo i file di regole, le skill e lo
   strumento `scripts/modello-agenti.sh`, mai il codice applicativo dei progetti o i dati.
+  Se il ramo del progetto è protetto, apre una pull request di sole regole invece di forzare; il
+  coordinatore la unisce quando i controlli sono verdi.
 - Dopo ogni pubblicazione: smoke test in sola lettura; se qualcosa non va, si torna indietro.
 
 Le prove si fanno su build locale o canale di anteprima, **prima** di pubblicare su staging.
@@ -297,6 +299,13 @@ La fonte globale è `sbotz17/squadraalphalab` (`CLAUDE.md`, `DECISIONI.md`, `ski
   Se il modello gratuito è occupato, si passa al ripiego a pagamento più economico con
   `./scripts/modello-agenti.sh ripiego`, e si torna al gratuito con `./scripts/modello-agenti.sh gratis`.
   Se il comando non c'è, si cambia a mano la riga `model:` dell'agente.
+- **Se il credito DeepSeek finisce**, DeepSeek non si usa, nemmeno il ripiego a pagamento:
+  - i controlli AI automatici su GitHub (revisione delle PR, classificazione delle segnalazioni, diario) si
+    saltano con un avviso e non bloccano il lavoro;
+  - chi sviluppa (codice, bug, architettura, database) continua sui modelli gratuiti;
+  - validatore, revisore della sicurezza e guardiano della produzione, senza credito, non approvano: il loro
+    esito è "bloccato" finché il credito non torna. Tester e controlli automatici del codice restano obbligatori;
+  - ricaricare il credito lo decide Andrea: la squadra lo avvisa e intanto va avanti con il resto.
 - Il modello `#low` (economico ma con meno ragionamento) non si usa come predefinito: fa risparmiare pochi
   centesimi e rischia di far rifare il lavoro.
 - Il costo più alto non sono i test, ma le **sessioni di lavoro lunghe**: conviene aprirne una nuova quando
