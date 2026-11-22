@@ -158,6 +158,17 @@ DeepSeek a pagamento **solo dove serve ragionare**; il resto su modelli gratuiti
   (`deepseek/deepseek-flash#high`) e, quando torna disponibile, `./scripts/modello-agenti.sh gratis`.
   `./scripts/modello-agenti.sh stato` elenca i modelli e avvisa se un agente che deve restare a pagamento
   finisce su un gratuito.
+- **Credito DeepSeek esaurito** (decisione di Andrea, 22/11/2026): senza credito DeepSeek non si usa, nemmeno
+  il ripiego a pagamento (`deepseek/deepseek-flash#high`).
+  - I controlli AI automatici della CI che lo usano (revisione delle PR, triage, diario) riconoscono la risposta
+    «Insufficient Balance», si saltano con un avviso e **non bloccano** la PR; ogni altro errore li fa fallire.
+  - Restano obbligatori come sempre: CI di codice (analisi, test, prove), tester, validatore,
+    revisore-sicurezza, guardiano. La revisione AI è un aiuto in più, non un gate.
+  - Gli agenti di sviluppo a pagamento (`sviluppatore-backend`, `sviluppatore-frontend`, `risolutore-bug`,
+    `architetto`, `dba`) lavorano sui modelli gratuiti finché il credito non torna.
+  - `validatore`, `revisore-sicurezza` e `guardiano-produzione` non passano a un modello più debole: se non
+    possono girare a pagamento l'esito è `BLOCCATO`, mai `APPROVATO`/`GO`. Nel dubbio vale NO-GO.
+  - Ricaricare il credito è una decisione di Andrea (soldi): la squadra lo avvisa e prosegue sul resto.
 - La spesa vera sono le sessioni interattive lunghe: `/new` quando si cambia argomento.
 - Numeri e motivi: `DECISIONI.md`, voce 30/10/2026.
 - **Limite noto**: qui ci sono il criterio e lo strumento, non l'impostazione tecnica. Le righe `model:`
@@ -483,7 +494,10 @@ deve provarla. Non ci arrivano bug noti.
 
 Unica eccezione al push diretto: il workflow di sincronizzazione delle regole aggiorna solo i file di
 regole (`CLAUDE.md`/`AGENTS.md`, `DECISIONI.md`, `REGOLE-IN-BREVE.md`, le skill e lo strumento
-`scripts/modello-agenti.sh`), mai il codice applicativo, i dati o le configurazioni.
+`scripts/modello-agenti.sh`), mai il codice applicativo, i dati o le configurazioni. Se il ramo del
+progetto è protetto e chiede una pull request, il workflow non aggira la protezione: apre una PR di sole
+regole, che passa dai controlli obbligatori del progetto e che il coordinatore unisce quando sono verdi.
+Un progetto che fallisce non ferma gli altri; il workflow finisce rosso ed elenca i falliti.
 
 ## Lo stack di Andrea
 
